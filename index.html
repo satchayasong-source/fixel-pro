@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIXEL PRO - Smart Image Tool</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a365d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/685/685655.png">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #cbd5e0; display: flex; justify-content: center; padding: 20px; color: #1a202c; }
+        .container { background: #ffffff; padding: 40px; border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); width: 100%; max-width: 700px; border: 1px solid #a0aec0; position: relative; }
+        
+        .lang-switch { position: absolute; top: 20px; right: 20px; display: flex; gap: 5px; }
+        .lang-btn { background: #edf2f7; border: 1px solid #cbd5e0; padding: 5px 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; }
+        .lang-btn.active { background: #2b6cb0; color: #fff; }
+
+        h2 { text-align: center; color: #1a365d; font-size: 38px; font-weight: 900; margin-bottom: 30px; letter-spacing: 2px; text-transform: uppercase; }
+        h2 span { color: #2b6cb0; }
+
+        .box { border: 2px solid #a0aec0; padding: 25px; border-radius: 16px; margin-bottom: 25px; background: #f7fafc; }
+        h3 { margin: 0 0 15px 0; color: #2d3748; font-size: 20px; font-weight: 700; border-left: 6px solid #2b6cb0; padding-left: 15px; }
+        
+        .drop-zone { border: 2px dashed #4a5568; background: #fff; padding: 20px; text-align: center; border-radius: 12px; cursor: pointer; transition: 0.3s; }
+        .drop-zone.dragover { border-color: #2b6cb0; background: #ebf8ff; }
+
+        #fileListDisplay { margin-top: 15px; max-height: 120px; overflow-y: auto; background: #edf2f7; border-radius: 10px; padding: 10px; display: none; border: 1px solid #cbd5e0; }
+        .file-item-info { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-bottom: 1px solid #cbd5e0; }
+
+        .flex-row { display: flex; gap: 15px; align-items: center; margin-bottom: 15px; }
+        .flex-row div { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: 700; font-size: 14px; }
+        select, input[type="range"] { width: 100%; cursor: pointer; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 16px; border: none; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 16px; transition: 0.2s; }
+        .btn-process { background: #1a365d; color: #fff; border-bottom: 4px solid #000; }
+        .btn-download { background: #22543d; color: #fff; display: none; margin-top: 15px; width: 100%; text-align: center; text-decoration: none; line-height: 50px; }
+        .btn-reset { background: #822727; color: #fff; width: 100%; margin-top: 10px; padding: 8px; font-size: 12px; border-radius: 8px; }
+
+        #previewSection { margin-top: 30px; text-align: center; border-top: 3px solid #cbd5e0; padding-top: 20px; display: none; }
+        .preview-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 15px; }
+        .preview-card { width: 130px; background: #fff; border: 2px solid #1a365d; border-radius: 8px; padding: 5px; transition: opacity 0.3s ease; }
+        .preview-card img { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; }
+        .new-size-badge { font-size: 11px; font-weight: 800; display: block; margin-top: 5px; color: #22543d; }
+        .loading-text { color: #2b6cb0; font-weight: 700; display: none; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="lang-switch">
+        <button id="btn-th" class="lang-btn active" onclick="setLang('th')">TH</button>
+        <button id="btn-en" class="lang-btn" onclick="setLang('en')">EN</button>
+    </div>
+
+    <h2>FIXEL <span>PRO</span></h2>
+    
+    <div class="box">
+        <h3 id="step1-title">📂 1. แหล่งไฟล์ (Source)</h3>
+        <div id="dropZone" class="drop-zone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept="image/*,.heic,.heif" multiple style="display:none">
+            <p id="drop-text" style="font-weight:700;">ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์</p>
+        </div>
+        <div id="fileListDisplay"></div>
+        <button id="reset-btn" class="btn-reset" onclick="resetAll()">❌ รีเซ็ตระบบ (Clear All)</button>
+    </div>
+
+    <div class="box">
+        <h3 id="step2-title">⚙️ 2. การตั้งค่า (Settings)</h3>
+        <div class="flex-row">
+            <div>
+                <label id="format-label">ฟอร์แมต:</label>
+                <select id="formatSelect" onchange="debouncePreview()">
+                    <option value="image/jpeg">JPG</option>
+                    <option value="image/png">PNG</option>
+                    <option value="image/webp">WebP</option>
+                </select>
+            </div>
+            <div>
+                <label id="scale-label">มาตราส่วน:</label>
+                <select id="resizeSelect" onchange="debouncePreview()">
+                    <option value="1">100%</option>
+                    <option value="0.75">75%</option>
+                    <option value="0.5">50%</option>
+                    <option value="0.25">25%</option>
+                </select>
+            </div>
+        </div>
+        
+        <label><span id="quality-label">คุณภาพ:</span> <span id="qLabel" style="color:#2b6cb0;">80</span>%</label>
+        <input type="range" id="qualityRange" min="1" max="100" value="80" oninput="document.getElementById('qLabel').innerText=this.value; debouncePreview()">
+
+        <div class="btn-group">
+            <button id="export-btn" class="btn-process" onclick="exportFiles()">🚀 ส่งออกไฟล์ (Export)</button>
+        </div>
+        <a id="downloadBtn" class="btn-download" href="javascript:void(0)" onclick="downloadAll()">💾 ดาวน์โหลดทั้งหมด (Download All)</a>
+    </div>
+
+    <div id="previewSection">
+        <h3 id="preview-title" style="text-align:center; border:none; padding:0;">🖼️ ตรวจสอบก่อนส่งออก (Preview)</h3>
+        <div id="loadingText" class="loading-text">กำลังประมวลผลตัวอย่าง...</div>
+        <div id="previewGrid" class="preview-container"></div>
+    </div>
+</div>
+
+<script>
+    const langData = {
+        th: { step1: "📂 1. แหล่งไฟล์ (Source)", drop: "ลากไฟล์มาวางที่นี่ หรือ คลิกเพื่อเลือกไฟล์", reset: "❌ รีเซ็ตระบบ (Clear All)", step2: "⚙️ 2. การตั้งค่า (Settings)", format: "ฟอร์แมต:", scale: "มาตราส่วน:", quality: "คุณภาพ:", export: "🚀 ส่งออกไฟล์ (Export)", download: "💾 ดาวน์โหลดทั้งหมด", preview: "🖼️ ตรวจสอบก่อนส่งออก (Preview)", loading: "กำลังประมวลผลตัวอย่าง..." },
+        en: { step1: "📂 1. Source Files", drop: "Drag & Drop files here or click to select", reset: "❌ Clear All", step2: "⚙️ 2. Settings", format: "Format:", scale: "Scale:", quality: "Quality:", export: "🚀 Export Images", download: "💾 Download All", preview: "🖼️ Preview Before Export", loading: "Processing preview..." }
+    };
+
+    let currentLang = 'th';
+    let selectedFiles = [];
+    let readyToDownload = [];
+    let previewTimer;
+
+    const dz = document.getElementById('dropZone');
+    dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dragover'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+    dz.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dz.classList.remove('dragover');
+        handleFileSelection(e.dataTransfer.files);
+    });
+
+    document.getElementById('fileInput').onchange = (e) => handleFileSelection(e.target.files);
+
+    function handleFileSelection(files) {
+        selectedFiles = Array.from(files);
+        const display = document.getElementById('fileListDisplay');
+        display.innerHTML = "";
+        display.style.display = "block";
+        selectedFiles.forEach(file => {
+            display.innerHTML += `<div class="file-item-info"><span style="font-weight:700;">${file.name}</span><span style="color:#2b6cb0;">${(file.size / 1024).toFixed(1)} KB</span></div>`;
+        });
+        debouncePreview();
+    }
+
+    function debouncePreview() {
+        clearTimeout(previewTimer);
+        document.getElementById('loadingText').style.display = "block";
+        document.getElementById('previewGrid').style.opacity = "0.5";
+        previewTimer = setTimeout(() => generatePreviews(), 400);
+    }
+
+    async function generatePreviews() {
+        if (selectedFiles.length === 0) return;
+        const grid = document.getElementById('previewGrid');
+        grid.innerHTML = "";
+        document.getElementById('previewSection').style.display = "block";
+        document.getElementById('downloadBtn').style.display = "none";
+
+        const format = document.getElementById('formatSelect').value;
+        const scale = parseFloat(document.getElementById('resizeSelect').value);
+        const quality = document.getElementById('qualityRange').value / 100;
+
+        for (let file of selectedFiles) {
+            let blob = file;
+            if (file.name.toLowerCase().match(/\.(heic|heif)$/)) {
+                blob = await heic2any({ blob: file, toType: "image/jpeg" });
+                if (Array.isArray(blob)) blob = blob[0];
+            }
+            const img = await loadImage(blob);
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL(format, quality);
+            const sizeKB = (Math.ceil((dataUrl.split(',')[1].length) * 0.75) / 1024).toFixed(1);
+            const card = document.createElement('div');
+            card.className = 'preview-card';
+            card.innerHTML = `<img src="${dataUrl}"><span class="new-size-badge">Est: ${sizeKB} KB</span>`;
+            grid.appendChild(card);
+        }
+        document.getElementById('loadingText').style.display = "none";
+        grid.style.opacity = "1";
+    }
+
+    function loadImage(blob) {
+        return new Promise(res => {
+            const img = new Image();
+            img.onload = () => res(img);
+            img.src = URL.createObjectURL(blob);
+        });
+    }
+
+    function exportFiles() {
+        if (selectedFiles.length === 0) return;
+        readyToDownload = [];
+        const imgs = document.querySelectorAll('.preview-card img');
+        imgs.forEach((img, i) => {
+            const ext = document.getElementById('formatSelect').value.split('/')[1];
+            readyToDownload.push({ url: img.src, name: `FIXEL_${i}_${Date.now()}.${ext}` });
+        });
+        document.getElementById('downloadBtn').style.display = "block";
+    }
+
+    function downloadAll() {
+        readyToDownload.forEach(f => {
+            const a = document.createElement('a'); a.href = f.url; a.download = f.name; a.click();
+        });
+    }
+
+    function setLang(lang) {
+        currentLang = lang;
+        document.getElementById('btn-th').classList.toggle('active', lang === 'th');
+        document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+        const d = langData[lang];
+        document.getElementById('step1-title').innerText = d.step1;
+        document.getElementById('drop-text').innerText = d.drop;
+        document.getElementById('reset-btn').innerText = d.reset;
+        document.getElementById('step2-title').innerText = d.step2;
+        document.getElementById('format-label').innerText = d.format;
+        document.getElementById('scale-label').innerText = d.scale;
+        document.getElementById('quality-label').innerText = d.quality;
+        document.getElementById('export-btn').innerText = d.export;
+        document.getElementById('downloadBtn').innerText = d.download;
+        document.getElementById('preview-title').innerText = d.preview;
+        document.getElementById('loadingText').innerText = d.loading;
+    }
+
+    function resetAll() { location.reload(); }
+
+    // ลงทะเบียน Service Worker สำหรับ PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('FIXEL PRO PWA Ready!'))
+                .catch(err => console.log('PWA Error', err));
+        });
+    }
+</script>
+
+</body>
+</html>
