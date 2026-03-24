@@ -1,16 +1,20 @@
 {
   "short_name": "FIXEL PRO",
-  "name": "FIXEL PRO BY CHAMP",
+  "name": "FIXEL PRO - PDF Tools",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3342/3342137.png",
+      "src": "icon-192.png",
       "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#6366f1",
-  "background_color": "#f8fafc"
+  "theme_color": "#4f46e5",
+  "background_color": "#f1f5f9"
 }

@@ -1,8 +1,8 @@
-const CACHE_NAME = 'fixel-pro-v10';
-const assets = ['./', './index.html'];
+const CACHE_NAME = 'fixel-v12.8';
+const assets = ['./', './index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(assets)));
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(assets)));
 });
 
 self.addEventListener('fetch', e => {
