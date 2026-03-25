@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>FIXEL PRO v12.8 | BY CHAMP</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4472/4472584.png">
+
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root { 
+            --bg: #f1f5f9; --card-bg: #ffffff; --text-main: #0f172a; --text-sub: #64748b; --border: #e2e8f0;
+            --c1: #4f46e5; --c2: #f59e0b; --c3: #ef4444; --c4: #10b981; --c5: #8b5cf6; --c6: #6366f1; --c7: #f97316; --c8: #ec4899;
+            --header-bg: rgba(255, 255, 255, 0.8);
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a; --card-bg: #1e293b; --text-main: #f8fafc; --text-sub: #94a3b8; --border: #334155;
+            --header-bg: rgba(30, 41, 59, 0.8);
+        }
+
+        * { box-sizing: border-box; font-family: 'Kanit', sans-serif; transition: 0.25s ease; }
+        body { background: var(--bg); margin: 0; padding: 20px; padding-top: 110px; color: var(--text-main); -webkit-tap-highlight-color: transparent; }
+
+        header { 
+            position: fixed; top: 0; left: 0; right: 0; height: 90px; z-index: 1000; 
+            background: var(--header-bg); border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: env(safe-area-inset-top) 40px 0 40px; /* รองรับ Notch มือถือ */
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1);
+        }
+        .logo-group { display: flex; flex-direction: column; line-height: 1.1; }
+        .logo { 
+            font-weight: 900; font-size: 1.8rem; letter-spacing: -1.5px; 
+            background: linear-gradient(135deg, var(--c1), var(--c8));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-decoration: none; text-transform: uppercase;
+        }
+        .credit { font-size: 0.75rem; font-weight: 600; color: var(--text-sub); letter-spacing: 1.2px; margin-top: 5px; text-transform: uppercase; }
+        .credit b { color: var(--c1); font-weight: 800; }
+
+        .controls { display: flex; gap: 12px; }
+        .toggle-btn { background: var(--card-bg); border: 1px solid var(--border); color: var(--text-main); padding: 10px 18px; border-radius: 14px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+
+        .container { max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
+        .card { background: var(--card-bg); border-radius: 28px; padding: 25px; border: 1px solid var(--border); position: relative; display: flex; flex-direction: column; min-height: 680px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .card-icon { font-size: 2.2rem; margin-bottom: 10px; }
+        .card h3 { margin: 0; font-size: 1.3rem; font-weight: 700; }
+        .card .desc { color: var(--text-sub); font-size: 0.9rem; margin-bottom: 15px; min-height: 45px; }
+
+        .guide-box { margin-top: 15px; padding: 14px; background: var(--bg); border-radius: 16px; border: 1px dashed var(--border); font-size: 0.8rem; color: var(--text-sub); line-height: 1.5; }
+        .guide-box b { color: var(--text-main); display: block; margin-bottom: 6px; font-weight: 600; }
+        .guide-box ul { margin: 0; padding-left: 20px; }
+        
+        .drop-zone { 
+            flex-grow: 1; border: 2px dashed var(--border); border-radius: 20px; background: var(--bg); 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 10px; padding: 15px; 
+            align-content: start; cursor: pointer; overflow-y: auto; max-height: 180px;
+        }
+        .drop-zone:empty::before { content: attr(data-label); grid-column: 1/-1; text-align: center; padding-top: 55px; color: var(--text-sub); opacity: 0.5; }
+        
+        .pv-item { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 6px; text-align: center; height: 115px; position: relative; }
+        .pv-item img { width: 100%; height: 85px; object-fit: cover; border-radius: 8px; }
+        .pv-item span { font-size: 9px; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-top: 5px; color: var(--text-sub); }
+
+        .config-box { background: var(--bg); border-radius: 18px; padding: 15px; margin-bottom: 12px; border: 1px solid var(--border); }
+        select, input[type="range"], textarea, input[type="text"] { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text-main); margin-top: 6px; outline: none; }
+        
+        .stats-box { font-size: 0.8rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; padding: 12px; background: var(--card-bg); border-radius: 14px; border: 1px solid var(--border); }
+        .stats-box b { color: var(--c4); display: block; font-size: 0.9rem; }
+        .savings-tag { grid-column: 1/-1; text-align: center; border-top: 1px solid var(--border); margin-top: 8px; padding-top: 8px; color: var(--c1) !important; font-weight: 700; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 18px; }
+        .btn-main { flex: 2; color: white; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; font-size: 1rem; }
+        .btn-reset { flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text-sub); border-radius: 16px; cursor: pointer; font-weight: 600; }
+        .btn-main:disabled { background: #f1f5f9 !important; color: #cbd5e1 !important; cursor: not-allowed; opacity: 1; }
+
+        .loader { display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.92); z-index: 100; align-items: center; justify-content: center; border-radius: 28px; font-size: 1.8rem; font-weight: 900; color: var(--c1); flex-direction: column; }
+        [data-theme="dark"] .loader { background: rgba(30, 41, 59, 0.92); }
+
+        .wm-preview-container { height: 180px; background: #e2e8f0; border-radius: 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        #wm-canvas { background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+        .modal-content { background: var(--card-bg); width: 100%; max-width: 1100px; height: 85vh; border-radius: 35px; padding: 30px; display: flex; flex-direction: column; }
+        .page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; overflow-y: auto; padding: 10px; flex-grow: 1; }
+        .modal-item { position: relative; background: var(--bg); border: 4px solid transparent; border-radius: 16px; padding: 8px; cursor: pointer; }
+        .modal-item img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; filter: grayscale(1); opacity: 0.4; }
+        .modal-item.keep { border-color: var(--c4); background: #ecfdf5; }
+        .modal-item.keep img { filter: grayscale(0); opacity: 1; }
+        
+        .card-2 .btn-main { background: var(--c2); } .card-3 .btn-main { background: var(--c3); } 
+        .card-4 .btn-main { background: var(--c4); } .card-5 .btn-main { background: var(--c5); } 
+        .card-6 .btn-main { background: var(--c6); } .card-7 .btn-main { background: var(--c7); }
+
+        @media (max-width: 600px) {
+            header { padding: 0 20px; height: 80px; }
+            body { padding-top: 100px; }
+            .logo { font-size: 1.4rem; }
+            .container { grid-template-columns: 1fr; }
+            .card { min-height: auto; margin-bottom: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-group">
+        <a href="#" class="logo">FIXEL PRO <span style="font-size:0.7rem; opacity:0.6; -webkit-text-fill-color: var(--text-sub);">v12.8</span></a>
+        <div class="credit">BY <b>CHAMP สัชญา สองเมือง</b></div>
+    </div>
+    <div class="controls">
+        <button class="toggle-btn" onclick="toggleTheme()"><span id="theme-icon">🌙</span></button>
+        <button class="toggle-btn" onclick="toggleLang()">🌐 <span id="lang-text">English</span></button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="card card-1">
+        <div class="card-icon">📚</div>
+        <h3 data-key="t1h">รวมไฟล์ PDF</h3>
+        <p class="desc" data-key="t1d">รวม PDF หลายไฟล์เป็นเล่มเดียว</p>
+        <div class="drop-zone" id="dz-1" data-key="dz_pdf" data-label="ลากไฟล์ PDF มาวาง" onclick="document.getElementById('in-1').click()"></div>
+        <input type="file" id="in-1" multiple accept=".pdf" style="display:none;" onchange="handleFiles(this.files, 1)">
+        <div class="guide-box">
+            <b data-key="g_title">วิธีใช้งาน:</b>
+            <ul data-key="g1">
+                <li>เลือกไฟล์ PDF 2 ไฟล์ขึ้นไป</li>
+                <li>ลากเพื่อสลับลำดับหน้าได้ทันที</li>
+                <li>กด 'บันทึก PDF' เพื่อรวมไฟล์</li>
+            </ul>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main" id="run-1" data-key="b1" onclick="doMerge()" disabled style="background: #c7d2fe; color: #4338ca;">บันทึก PDF</button>
+            <button class="btn-reset" data-key="br" onclick="reset(1)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-1"><span id="pt-1">0%</span></div>
+    </div>
+
+    <div class="card card-2">
+        <div class="card-icon">✂️</div>
+        <h3 data-key="t2h">แยกไฟล์ PDF</h3>
+        <p class="desc" data-key="t2d">แยกทุกหน้าออกเป็นไฟล์เดี่ยวๆ</p>
+        <div class="drop-zone" id="dz-2" data-key="dz_pdf" data-label="ลากไฟล์ PDF มาวาง" onclick="document.getElementById('in-2').click()"></div>
+        <input type="file" id="in-2" accept=".pdf" style="display:none;" onchange="handleFiles(this.files, 2)">
+        <div class="guide-box">
+            <b data-key="g_title">วิธีใช้งาน:</b>
+            <ul data-key="g2">
+                <li>เลือกไฟล์ PDF ที่มีหลายหน้า</li>
+                <li>ระบบจะแยกแต่ละหน้าเป็น 1 ไฟล์</li>
+                <li>รับไฟล์ทั้งหมดในรูปแบบ .ZIP</li>
+            </ul>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main" id="run-2" data-key="b2" onclick="doSplit()" disabled>ดาวน์โหลด ZIP</button>
+            <button class="btn-reset" data-key="br" onclick="reset(2)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-2"><span id="pt-2">0%</span></div>
+    </div>
+
+    <div class="card card-3">
+        <div class="card-icon">🗑️</div>
+        <h3 data-key="t3h">ลบบางหน้าออก</h3>
+        <p class="desc" data-key="t3d">เลือกเฉพาะหน้าที่ต้องการเก็บไว้</p>
+        <div class="drop-zone" id="dz-3" data-key="dz_pdf" data-label="ลากไฟล์ PDF มาวาง" onclick="document.getElementById('in-3').click()"></div>
+        <input type="file" id="in-3" accept=".pdf" style="display:none;" onchange="openDeleteModal(this.files[0])">
+        <div class="guide-box">
+            <b data-key="g_title">วิธีใช้งาน:</b>
+            <ul data-key="g3">
+                <li>เลือกไฟล์ PDF เพื่อดูตัวอย่างหน้า</li>
+                <li>คลิกเลือกหน้าที่ต้องการ 'เก็บไว้' (สีเขียว)</li>
+                <li>หน้าที่มีสีเทาจะถูกลบออก</li>
+            </ul>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main" id="run-3" data-key="b3" onclick="doDelete()" disabled>บันทึกไฟล์ใหม่</button>
+            <button class="btn-reset" data-key="br" onclick="reset(3)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-3"><span id="pt-3">0%</span></div>
+    </div>
+
+    <div class="card card-4">
+        <div class="card-icon">📉</div>
+        <h3 data-key="t4h">บีบอัดรูปภาพ</h3>
+        <p class="desc" data-key="t4d">ลดขนาดไฟล์พร้อมพรีวิวผลลัพธ์ทันที</p>
+        <div class="config-box">
+            <select id="fmt-4" onchange="calcSize()"><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select>
+            <div style="font-size:0.8rem; margin-top:8px"><span data-key="qual">คุณภาพ</span>: <b id="q-val">75%</b></div>
+            <input type="range" id="rq-4" min="10" max="100" value="75" oninput="updateQualLabel(this.value)">
+            <div class="stats-box">
+                <div><span data-key="s_old">เดิม</span>: <b id="size-before">-</b></div>
+                <div><span data-key="s_new">คาดการณ์</span>: <b id="size-after">-</b></div>
+                <div class="savings-tag" id="savings-val" data-key="save_init">ประหยัดพื้นที่: -%</div>
+            </div>
+        </div>
+        <div class="drop-zone" id="dz-4" data-key="dz_img" data-label="ลากรูปภาพมาวาง" onclick="document.getElementById('in-4').click()"></div>
+        <input type="file" id="in-4" accept="image/*" style="display:none;" onchange="handleFiles(this.files, 4)">
+        <div class="btn-group">
+            <button class="btn-main" id="run-4" data-key="b4" onclick="doCompress()" disabled>บันทึกรูปภาพ</button>
+            <button class="btn-reset" data-key="br" onclick="reset(4)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-4"><span id="pt-4">0%</span></div>
+    </div>
+
+    <div class="card card-5">
+        <div class="card-icon">🖼️</div>
+        <h3 data-key="t5h">รูปเป็น PDF</h3>
+        <p class="desc" data-key="t5d">แปลงภาพหลายใบเป็น 1 ไฟล์ PDF</p>
+        <div class="drop-zone" id="dz-5" data-key="dz_img" data-label="ลากรูปภาพมาวาง" onclick="document.getElementById('in-5').click()"></div>
+        <input type="file" id="in-5" multiple accept="image/*" style="display:none;" onchange="handleFiles(this.files, 5)">
+        <div class="guide-box">
+            <b data-key="g_title">วิธีใช้งาน:</b>
+            <ul data-key="g5">
+                <li>เลือกรูปภาพที่ต้องการรวม</li>
+                <li>ลากเพื่อจัดลำดับก่อนหลัง</li>
+                <li>ระบบจะสร้าง PDF ตามขนาดรูปต้นฉบับ</li>
+            </ul>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main" id="run-5" data-key="b5" onclick="doI2P()" disabled style="background: #c7d2fe; color: #4338ca;">สร้าง PDF</button>
+            <button class="btn-reset" data-key="br" onclick="reset(5)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-5"><span id="pt-5">0%</span></div>
+    </div>
+
+    <div class="card card-6">
+        <div class="card-icon">📷</div>
+        <h3 data-key="t6h">PDF เป็นรูปภาพ</h3>
+        <p class="desc" data-key="t6d">แปลงหน้า PDF ออกเป็นรูป (ZIP)</p>
+        <div class="config-box"><select id="fmt-6"><option value="image/jpeg">JPEG</option><option value="image/png">PNG</option><option value="image/webp">WebP</option></select></div>
+        <div class="drop-zone" id="dz-6" data-key="dz_pdf" data-label="ลากไฟล์ PDF มาวาง" onclick="document.getElementById('in-6').click()"></div>
+        <input type="file" id="in-6" accept=".pdf" style="display:none;" onchange="handleFiles(this.files, 6)">
+        <div class="guide-box">
+            <b data-key="g_title">วิธีใช้งาน:</b>
+            <ul data-key="g6">
+                <li>เลือกนามสกุลไฟล์ที่ต้องการ</li>
+                <li>ระบบจะ Capture แต่ละหน้าเป็นรูป</li>
+                <li>ความคมชัดสูง (2x Scale)</li>
+            </ul>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main" id="run-6" data-key="b6" onclick="doP2I()" disabled style="background: #c7d2fe; color: #4338ca;">ดาวน์โหลด ZIP</button>
+            <button class="btn-reset" data-key="br" onclick="reset(6)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-6"><span id="pt-6">0%</span></div>
+    </div>
+
+    <div class="card card-7">
+        <div class="card-icon">📄</div>
+        <h3 data-key="t7h">ดึงข้อความออก</h3>
+        <p class="desc" data-key="t7d">ดึงข้อความจากไฟล์ PDF</p>
+        <div class="config-box"><textarea id="txt-7" placeholder="ข้อความจะปรากฏที่นี่..." readonly style="height: 100px;"></textarea></div>
+        <div class="drop-zone" id="dz-7" data-key="dz_pdf" data-label="ลากไฟล์ PDF มาวาง" onclick="document.getElementById('in-7').click()"></div>
+        <input type="file" id="in-7" accept=".pdf" style="display:none;" onchange="handleFiles(this.files, 7)">
+        <div class="guide-box">
+            <b data-key="g_title">วิธีใช้งาน:</b>
+            <ul data-key="g7">
+                <li>รองรับ PDF ที่เป็น Text Layer</li>
+                <li>ข้อความจะแสดงแยกตามเลขหน้า</li>
+                <li>สามารถคัดลอก (Copy) ไปใช้งานได้ทันที</li>
+            </ul>
+        </div>
+        <div class="btn-group">
+            <button class="btn-main" id="run-7" data-key="b7" onclick="doExtract()" disabled style="background: #ffedd5; color: #ea580c;">ดึงข้อความ</button>
+            <button class="btn-reset" data-key="br" onclick="reset(7)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-7"><span id="pt-7">0%</span></div>
+    </div>
+
+    <div class="card card-8">
+        <div class="card-icon">🏷️</div>
+        <h3 data-key="t8h">ใส่ลายน้ำ PDF</h3>
+        <p class="desc" data-key="t8d">พรีวิวตรงไฟล์จริง 100% (รองรับไทย)</p>
+        <div class="wm-preview-container"><canvas id="wm-canvas" width="120" height="170"></canvas></div>
+        <div class="config-box" style="background: transparent; border: none; padding: 0;">
+            <input type="text" id="wm-txt" placeholder="ข้อความลายน้ำ..." value="สำเนาถูกต้อง" oninput="drawLiveWM(); checkBtn(8)" style="border: 1px solid #e2e8f0; background: #fff; padding: 12px; margin-bottom: 10px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+                <div><span style="font-size:0.75rem; color: var(--text-sub);" data-key="wmsize">ขนาด</span>: <input type="range" id="wm-size" min="10" max="200" value="60" oninput="drawLiveWM()"></div>
+                <div><span style="font-size:0.75rem; color: var(--text-sub);" data-key="wmrot">หมุน</span>: <input type="range" id="wm-rot" min="0" max="360" value="45" oninput="drawLiveWM()"></div>
+            </div>
+            <div style="margin-top:10px;"><span style="font-size:0.75rem; color: var(--text-sub);" data-key="opac">ความโปร่งใส</span>: <input type="range" id="wm-op" min="0.1" max="1.0" step="0.1" value="0.3" oninput="drawLiveWM()"></div>
+        </div>
+        <div class="drop-zone" id="dz-8" data-key="dz_pdf" data-label="ลากไฟล์ PDF มาวาง" onclick="document.getElementById('in-8').click()" style="margin-top: 15px; min-height: 80px; max-height: 100px;"></div>
+        <input type="file" id="in-8" accept=".pdf" style="display:none;" onchange="handleFiles(this.files, 8)">
+        <div class="btn-group">
+            <button class="btn-main" id="run-8" data-key="b8" onclick="doWatermark()" disabled style="background: #fbcfe8; color: #be185d;">บันทึกไฟล์</button>
+            <button class="btn-reset" data-key="br" onclick="reset(8)">ล้าง</button>
+        </div>
+        <div class="loader" id="ld-8"><span id="pt-8">0%</span></div>
+    </div>
+</div>
+
+<div id="modal"><div class="modal-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px"><h3 data-key="mh">เลือกหน้า</h3><button class="btn-main" onclick="closeModal()" style="width:auto; padding:10px 45px; background:var(--c1)" data-key="ok">ตกลง</button></div>
+    <div class="page-grid" id="modal-grid"></div>
+</div></div>
+
+<script>
+    // ลงทะเบียน Service Worker แบบเรียกไฟล์ภายนอก
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker Registered!', reg))
+                .catch(err => console.log('Registration Failed', err));
+        });
+    }
+
+    const { PDFDocument, rgb, degrees } = PDFLib;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+    let store = { 1: [], 2: null, 3: null, 4: null, 5: [], 6: null, 7: null, 8: null };
+    let keepSet = new Set(), lang = 'th', calcTimeout;
+
+    // ระบบแปลภาษาและฟังก์ชันการทำงานอื่นๆ คงเดิมตามไฟล์ Fixel.html
+    const translations = {
+        th: {
+            t1h: "รวมไฟล์ PDF", t1d: "รวม PDF หลายไฟล์เป็นเล่มเดียว", t2h: "แยกไฟล์ PDF", t2d: "แยกทุกหน้าออกเป็นไฟล์เดี่ยวๆ",
+            t3h: "ลบบางหน้าออก", t3d: "เลือกเฉพาะหน้าที่ต้องการเก็บไว้", t4h: "บีบอัดรูปภาพ", t4d: "ลดขนาดไฟล์พร้อมพรีวิวผลลัพธ์ทันที",
+            t5h: "รูปเป็น PDF", t5d: "แปลงภาพหลายใบเป็น 1 ไฟล์ PDF", t6h: "PDF เป็นรูปภาพ", t6d: "แปลงหน้า PDF เป็นรูป (ZIP)",
+            t7h: "ดึงข้อความออก", t7d: "ดึงข้อความจากไฟล์ PDF", t8h: "ใส่ลายน้ำ PDF", t8d: "พรีวิวตรงไฟล์จริง 100% (รองรับไทย)",
+            b1: "บันทึก PDF", b2: "ดาวน์โหลด ZIP", b3: "บันทึกไฟล์ใหม่", b4: "บันทึกรูปภาพ", b5: "สร้าง PDF", b6: "ดาวน์โหลด ZIP", b7: "ดึงข้อความ", b8: "บันทึกไฟล์",
+            br: "ล้าง", ok: "ตกลง", mh: "เลือกหน้าที่ต้องการเก็บไว้", qual: "คุณภาพ", dz_pdf: "ลากไฟล์ PDF มาวาง", dz_img: "ลากรูปภาพมาวาง", opac: "ความโปร่งใส", wmsize: "ขนาด", wmrot: "หมุน",
+            s_old: "เดิม", s_new: "คาดการณ์", save_text: "ประหยัดพื้นที่", save_init: "ประหยัดพื้นที่: -%", g_title: "วิธีใช้งาน:"
+        },
+        en: {
+            t1h: "Merge PDF", t1d: "Combine multiple PDFs", t2h: "Split PDF", t2d: "Extract all pages to single files",
+            t3h: "Remove Pages", t3d: "Select pages you want to KEEP", t4h: "Compress Image", t4d: "Reduce size with live preview",
+            t5h: "Image to PDF", t5d: "Convert photos to single PDF", t6h: "PDF to Image", t6d: "Convert PDF pages to images",
+            t7h: "Extract Text", t7d: "Extract text from PDF", t8h: "Watermark PDF", t8d: "Sync Preview 100% (Thai OK)",
+            b1: "Save PDF", b2: "Download ZIP", b3: "Save New File", b4: "Save Image", b5: "Create PDF", b6: "Download ZIP", b7: "Extract", b8: "Save PDF",
+            br: "Clear", ok: "OK", mh: "Select pages to KEEP", qual: "Quality", dz_pdf: "Drop PDF files here", dz_img: "Drop images here", opac: "Opacity", wmsize: "Size", wmrot: "Rotate",
+            s_old: "Original", s_new: "Predicted", save_text: "Savings", save_init: "Savings: -%", g_title: "How to use:"
+        }
+    };
+
+    function formatSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024, sizes = ['B', 'KB', 'MB'], i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function updateQualLabel(val) {
+        document.getElementById('q-val').innerText = val + '%';
+        clearTimeout(calcTimeout);
+        calcTimeout = setTimeout(calcSize, 300);
+    }
+
+    async function calcSize() {
+        if(!store[4]) return;
+        const q = document.getElementById('rq-4').value / 100;
+        const fmt = document.getElementById('fmt-4').value;
+        const img = new Image();
+        img.src = URL.createObjectURL(store[4]);
+        img.onload = () => {
+            const cv = document.createElement('canvas');
+            cv.width = img.width; cv.height = img.height;
+            cv.getContext('2d').drawImage(img, 0, 0);
+            cv.toBlob(b => {
+                const sAfter = b.size;
+                const savings = ((store[4].size - sAfter) / store[4].size * 100).toFixed(1);
+                document.getElementById('size-after').innerText = formatSize(sAfter);
+                document.getElementById('savings-val').innerText = `${translations[lang].save_text}: ${savings}%`;
+            }, fmt, q);
+        };
+    }
+
+    async function handleFiles(files, id) {
+        if(id===1||id===5){ for(let f of files){ store[id].push(f); addPv(id, await getPreview(f), f.name); } }
+        else { 
+            store[id]=files[0]; 
+            document.getElementById(`dz-${id}`).innerHTML=''; 
+            addPv(id, await getPreview(files[0]), files[0].name); 
+            if(id===4) {
+                document.getElementById('size-before').innerText = formatSize(files[0].size);
+                calcSize();
+            }
+        }
+        if(id===8) drawLiveWM();
+        checkBtn(id);
+    }
+
+    async function doCompress() { await prog(4); const q=document.getElementById('rq-4').value/100, fmt=document.getElementById('fmt-4').value, ext=fmt.split('/')[1], img=new Image(); img.src=URL.createObjectURL(store[4]); img.onload=()=>{ const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height; cv.getContext('2d').drawImage(img,0,0); cv.toBlob(b=>fin(4,b,`compressed.${ext}`), fmt, q); }; }
+    async function doMerge() { await prog(1); const pdf=await PDFDocument.create(); for(let f of store[1]){ const p=await PDFDocument.load(await f.arrayBuffer()); (await pdf.copyPages(p, p.getPageIndices())).forEach(pg=>pdf.addPage(pg)); } fin(1, await pdf.save(), 'merged.pdf'); }
+    async function doSplit() { await prog(2); const zip=new JSZip(), p=await PDFDocument.load(await store[2].arrayBuffer()); for(let i=0;i<p.getPageCount();i++){ const d=await PDFDocument.create(), [pg]=await d.copyPages(p, [i]); d.addPage(pg); zip.file(`page_${i+1}.pdf`, await d.save()); } zip.generateAsync({type:'blob'}).then(b=>fin(2,b,'split.zip')); }
+    async function doWatermark() { const txt = document.getElementById('wm-txt').value; if(!txt) return; await prog(8); try { const pdf = await PDFDocument.load(await store[8].arrayBuffer()); const pages = pdf.getPages(), size = parseInt(document.getElementById('wm-size').value), rot = parseInt(document.getElementById('wm-rot').value), op = parseFloat(document.getElementById('wm-op').value); for (const page of pages) { const { width, height } = page.getSize(), tempCv = document.createElement('canvas'); tempCv.width=width; tempCv.height=height; const tctx = tempCv.getContext('2d'); tctx.translate(width/2, height/2); tctx.rotate(-rot * Math.PI / 180); tctx.font = `bold ${size}px Kanit, sans-serif`; tctx.fillStyle = `rgba(128,128,128,${op})`; tctx.textAlign="center"; tctx.textBaseline="middle"; tctx.fillText(txt, 0, 0); const wmImg = await pdf.embedPng(tempCv.toDataURL()); page.drawImage(wmImg, { x:0, y:0, width:width, height:height, opacity:1 }); } fin(8, await pdf.save(), 'watermarked.pdf'); } catch(e) { alert("Error"); document.getElementById('ld-8').style.display='none'; } }
+    async function doDelete() { await prog(3); const p=await PDFDocument.load(await store[3].arrayBuffer()), n=await PDFDocument.create(); const keep=Array.from(keepSet).sort((a,b)=>a-b); (await n.copyPages(p,keep)).forEach(pg=>n.addPage(pg)); fin(3, await n.save(), 'edited.pdf'); }
+    async function doI2P() { await prog(5); const pdf=await PDFDocument.create(); for(let f of store[5]){ const img=f.type==='image/png'?await pdf.embedPng(await f.arrayBuffer()):await pdf.embedJpg(await f.arrayBuffer()); const pg=pdf.addPage([img.width,img.height]); pg.drawImage(img,{x:0,y:0,width:img.width,height:img.height}); } fin(5, await pdf.save(), 'images.pdf'); }
+    async function doP2I() { await prog(6); const zip=new JSZip(), fmt=document.getElementById('fmt-6').value, ext=fmt.split('/')[1], pdf=await pdfjsLib.getDocument({data:await store[6].arrayBuffer()}).promise; for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i), vp=pg.getViewport({scale:2}), cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height; await pg.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise; zip.file(`page_${i}.${ext}`, cv.toDataURL(fmt,0.9).split(',')[1], {base64:true}); } zip.generateAsync({type:'blob'}).then(b=>fin(6,b,'pdf_images.zip')); }
+    async function doExtract() { await prog(7); const pdf=await pdfjsLib.getDocument({data:await store[7].arrayBuffer()}).promise; let t=""; for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i), c=await pg.getTextContent(); t+=`-- Page ${i} --\n${c.items.map(it=>it.str).join(" ")}\n\n`; } document.getElementById('txt-7').value=t; document.getElementById('ld-7').style.display='none'; }
+    
+    async function getPreview(f) { if(f.type==='application/pdf'){ const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise, pg=await pdf.getPage(1), vp=pg.getViewport({scale:0.15}), cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height; await pg.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise; return cv.toDataURL(); } return URL.createObjectURL(f); }
+    function addPv(id, src, name) { const div=document.createElement('div'); div.className='pv-item'; div.innerHTML=`<img src="${src}"><span>${name}</span>`; document.getElementById(`dz-${id}`).appendChild(div); }
+    async function prog(id) { document.getElementById(`ld-${id}`).style.display='flex'; let pt=document.getElementById(`pt-${id}`); for(let i=0;i<=100;i+=25){ pt.innerText=i+'%'; await new Promise(r=>setTimeout(r,50)); } }
+    function fin(id, d, n) { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([d])); a.download=n; a.click(); document.getElementById(`ld-${id}`).style.display='none'; reset(id); }
+    function checkBtn(id) { const b = document.getElementById(`run-${id}`); if(id===1) b.disabled = store[1].length < 2; else if(id===3) b.disabled = keepSet.size === 0; else if(id===8) b.disabled = !store[8] || !document.getElementById('wm-txt').value; else b.disabled = !store[id]; }
+    function reset(id) { store[id]=(id===1||id===5)?[]:null; document.getElementById(`dz-${id}`).innerHTML=''; if(id===7)document.getElementById('txt-7').value=''; if(id===4) { document.getElementById('size-before').innerText='-'; document.getElementById('size-after').innerText='-'; document.getElementById('savings-val').innerText=`${translations[lang].save_text}: -%`; } checkBtn(id); drawLiveWM(); }
+    
+    function drawLiveWM() { const cv = document.getElementById('wm-canvas'), ctx = cv.getContext('2d'); const txt = document.getElementById('wm-txt').value || ""; const size = parseInt(document.getElementById('wm-size').value); const rot = parseInt(document.getElementById('wm-rot').value); const op = document.getElementById('wm-op').value; ctx.clearRect(0,0,cv.width,cv.height); ctx.fillStyle="white"; ctx.fillRect(0,0,cv.width,cv.height); ctx.save(); ctx.translate(cv.width/2, cv.height/2); ctx.rotate(-rot * Math.PI / 180); ctx.font = `bold ${size * 0.16}px Kanit, sans-serif`; ctx.fillStyle = `rgba(100,100,100,${op})`; ctx.textAlign="center"; ctx.textBaseline="middle"; ctx.fillText(txt, 0, 0); ctx.restore(); }
+    async function openDeleteModal(f) { store[3]=f; keepSet.clear(); document.getElementById('modal').style.display='flex'; const grid=document.getElementById('modal-grid'); grid.innerHTML='Loading...'; const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise; grid.innerHTML=''; for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i), vp=pg.getViewport({scale:0.2}), cv=document.createElement('canvas'); cv.width=vp.width; cv.height=vp.height; await pg.render({canvasContext:cv.getContext('2d'), viewport:vp}).promise; const src=cv.toDataURL(), box=document.createElement('div'); box.className='modal-item keep'; keepSet.add(i-1); box.innerHTML=`<img src="${src}"><div style="font-size:11px;margin-top:5px;font-weight:600">Page ${i}</div>`; box.onclick=()=>{ if(keepSet.has(i-1)){keepSet.delete(i-1);box.classList.remove('keep');}else{keepSet.add(i-1);box.classList.add('keep');} }; grid.appendChild(box); } }
+    function closeModal() { document.getElementById('modal').style.display='none'; document.getElementById('dz-3').innerHTML=`<div style="padding:15px; color:#10b981; font-size:1rem; text-align:center; width:100%; font-weight:600;">✓ Selected ${keepSet.size} Pages</div>`; checkBtn(3); }
+    function toggleTheme() { const t=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'; document.documentElement.setAttribute('data-theme', t); document.getElementById('theme-icon').innerText = t==='dark'?'☀️':'🌙'; drawLiveWM(); }
+    
+    function toggleLang() {
+        lang = lang === 'th' ? 'en' : 'th';
+        document.getElementById('lang-text').innerText = lang === 'th' ? 'English' : 'ไทย';
+        document.querySelectorAll('[data-key]').forEach(el => {
+            const key = el.getAttribute('data-key');
+            if(translations[lang][key]) {
+                el.innerHTML = translations[lang][key];
+                if(el.classList.contains('drop-zone')) el.setAttribute('data-label', translations[lang][key]);
+            }
+        });
+        if(store[4]) calcSize();
+    }
+
+    new Sortable(document.getElementById('dz-1'), { animation: 150 });
+    new Sortable(document.getElementById('dz-5'), { animation: 150 });
+    drawLiveWM();
+</script>
+</body>
+</html>
