@@ -9,7 +9,8 @@
     <title>FIXEL PRO v12.8 | BY CHAMP</title>
     
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/4472/4472584.png">
+    <link rel="apple-touch-icon" href="gemini-svg.svg">
+    <link rel="icon" type="image/svg+xml" href="gemini-svg.svg">
 
     <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -35,7 +36,7 @@
             position: fixed; top: 0; left: 0; right: 0; height: 90px; z-index: 1000; 
             background: var(--header-bg); border-bottom: 1px solid var(--border);
             display: flex; justify-content: space-between; align-items: center; 
-            padding: env(safe-area-inset-top) 40px 0 40px; /* รองรับ Notch มือถือ */
+            padding: env(safe-area-inset-top) 40px 0 40px;
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             box-shadow: 0 4px 20px -5px rgba(0,0,0,0.1);
         }
@@ -307,7 +308,6 @@
 </div></div>
 
 <script>
-    // ลงทะเบียน Service Worker แบบเรียกไฟล์ภายนอก
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
@@ -322,7 +322,6 @@
     let store = { 1: [], 2: null, 3: null, 4: null, 5: [], 6: null, 7: null, 8: null };
     let keepSet = new Set(), lang = 'th', calcTimeout;
 
-    // ระบบแปลภาษาและฟังก์ชันการทำงานอื่นๆ คงเดิมตามไฟล์ Fixel.html
     const translations = {
         th: {
             t1h: "รวมไฟล์ PDF", t1d: "รวม PDF หลายไฟล์เป็นเล่มเดียว", t2h: "แยกไฟล์ PDF", t2d: "แยกทุกหน้าออกเป็นไฟล์เดี่ยวๆ",
